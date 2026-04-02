@@ -6,20 +6,14 @@ See: .planning/PROJECT.md (updated 2026-04-02)
 
 **Core value:** Banks must be able to discover, authenticate, and transfer money between each other reliably, even when the central bank or the destination bank is temporarily unavailable.
 
-**Current focus:** Phase 1 execution
+**Current focus:** Phase 1 complete
 
 ## Current Position
 
 **Phase:** 01-registry-and-accounts
-**Plan:** 02 (completed)
-**Status:** In progress
-
-## Current Plan
-
-**Plan:** 01-registry-and-accounts-02 — Branch-bank user registration, account creation, and lookup contract
 **Status:** ✅ Complete
-**Summary:** `.planning/phases/01-registry-and-accounts/01-registry-and-accounts-02-SUMMARY.md`
-**Key deliverable:** OpenAPI 3.1 branch bank contract with user registration, account creation, and unauthenticated lookup
+**Verification:** Passed
+**Date:** 2026-04-02
 
 ## Milestones
 
