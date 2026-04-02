@@ -1,0 +1,466 @@
+openapi: 3.1.0
+info:
+  title: Central Bank API
+  version: 1.0.0
+  description: |
+    The central bank acts as a discovery directory for branch banks in the distributed banking system.
+
+    This API allows branch banks to register themselves, retrieve the directory of registered banks,
+    and send heartbeats to maintain their registration status.
+
+    Banks that do not send a heartbeat within 30 minutes are automatically removed from the registry.
+
+    This contract is implementation-agnostic and serves as the source of truth for interoperability
+    between independently built banking services.
+  contact:
+    name: Distributed Banking System
+    email: support@banking-system.example
+  license:
+    name: Educational Use Only
+    identifier: proprietary
+
+servers:
+  - url: http://localhost:8080/api/v1
+    description: Local development server
+  - url: https://centralbank.testing.example/api/v1
+    description: Testing server
+
+tags:
+  - name: Registry
+    description: Bank registration and directory operations
+  - name: Heartbeat
+    description: Bank heartbeat lifecycle management
+
+paths:
+  /banks:
+    post:
+      tags:
+        - Registry
+      summary: Register a new bank
+      description: |
+        Registers a new branch bank with the central bank and returns a unique bank ID.
+        The bank provides its public key and reachable address for discovery by other banks.
+      operationId: registerBank
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BankRegistrationRequest'
+            examples:
+              standardRegistration:
+                summary: Standard bank registration
+                value:
+                  name: "Estonia Commercial Bank"
+                  address: "https://ecb.banking.example:8443"
+                  publicKey: "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEEVs/o5+UW6c1x0O5JqZ2LxZ9m7Y3X5Z1C9xK9Y8Z7vL9Z1C9xK9Y8Z7vL9Z1C9xK9Y8Z7vL9Z1C9xK9Y8Z7vL9Z1C9xK9Y8Z7vL9Z1C9xK9Y8Z7vL9Z1C9xK9Y8Z7vL9Z1C9xK9Y8Z7vL9Z1C9xK9Y8Z7vL9Z1C9xK9Y8Z7vL9Z1C9xK9Y8Z7vL9Z1C9xK9Y8Z7vL9Z1C9xK9Y8Z7vL9Z1C9xK9Y8Z7vL9Z1A=="
+      responses:
+        '201':
+          description: Bank registered successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BankRegistrationResponse'
+              examples:
+                successfulRegistration:
+                  summary: Bank registered
+                  value:
+                    bankId: "EST001"
+                    expiresAt: "2026-04-02T11:42:03Z"
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                invalidRequest:
+                  summary: Missing required fields
+                  value:
+                    code: "INVALID_REQUEST"
+                    message: "Bank name is required"
+        '409':
+          description: Bank already registered
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                duplicateBank:
+                  summary: Bank with same address already exists
+                  value:
+                    code: "DUPLICATE_BANK"
+                    message: "A bank with this address is already registered"
+
+    get:
+      tags:
+        - Registry
+      summary: List all registered banks
+      description: |
+        Returns the complete directory of currently registered banks.
+        The list includes only active banks that have sent a heartbeat within the last 30 minutes.
+      operationId: listBanks
+      security: []
+      responses:
+        '200':
+          description: List of registered banks retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BankDirectory'
+              examples:
+                activeBanks:
+                  summary: Active bank directory
+                  value:
+                    banks:
+                      - bankId: "EST001"
+                        name: "Estonia Commercial Bank"
+                        address: "https://ecb.banking.example:8443"
+                        publicKey: "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEEVs/o5+UW6c1x0O5JqZ2LxZ9m7Y3X5Z1C9xK9Y8Z7vL9Z1C9xK9Y8Z7vL9Z1A=="
+                        lastHeartbeat: "2026-04-02T11:10:00Z"
+                        status: "active"
+                      - bankId: "LAT002"
+                        name: "Latvia Savings Bank"
+                        address: "https://lsb.banking.example:8443"
+                        publicKey: "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAzK9Y8Z7vL9Z1C9xK9Y8Z7vL9Z1C9xK9Y8Z7vL9Z1C9xK9Y8Z7vL9Z1C9xK9Y8Z7vL9Z1A=="
+                        lastHeartbeat: "2026-04-02T11:12:00Z"
+                        status: "active"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                serverError:
+                  summary: Server error
+                  value:
+                    code: "INTERNAL_ERROR"
+                    message: "An unexpected error occurred while retrieving the bank directory"
+        '503':
+          description: Service temporarily unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                unavailable:
+                  summary: Service unavailable
+                  value:
+                    code: "SERVICE_UNAVAILABLE"
+                    message: "The bank directory service is temporarily unavailable"
+
+  /banks/{bankId}:
+    get:
+      tags:
+        - Registry
+      summary: Get bank details by ID
+      description: |
+        Retrieves details for a specific bank by its unique identifier.
+        Returns 404 if the bank does not exist or has been removed due to inactivity.
+      operationId: getBank
+      security: []
+      parameters:
+        - name: bankId
+          in: path
+          required: true
+          description: The unique identifier of the bank
+          schema:
+            type: string
+            pattern: '^[A-Z]{3}\d{3}$'
+            example: "EST001"
+      responses:
+        '200':
+          description: Bank details retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BankDetails'
+              examples:
+                bankDetails:
+                  summary: Bank information
+                  value:
+                    bankId: "EST001"
+                    name: "Estonia Commercial Bank"
+                    address: "https://ecb.banking.example:8443"
+                    publicKey: "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEEVs/o5+UW6c1x0O5JqZ2LxZ9m7Y3X5Z1C9xK9Y8Z7vL9Z1C9xK9Y8Z7vL9Z1A=="
+                    lastHeartbeat: "2026-04-02T11:10:00Z"
+                    status: "active"
+        '404':
+          description: Bank not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                bankNotFound:
+                  summary: Bank does not exist
+                  value:
+                    code: "BANK_NOT_FOUND"
+                    message: "Bank with ID 'EST001' not found or has been removed"
+
+  /banks/{bankId}/heartbeat:
+    post:
+      tags:
+        - Heartbeat
+      summary: Send a heartbeat
+      description: |
+        Sends a heartbeat signal from a branch bank to the central bank to maintain its registration status.
+        The heartbeat timestamp is used to determine if a bank is still active.
+
+        Banks must send a heartbeat at least once every 30 minutes to remain registered.
+        If a bank fails to send a heartbeat within this window, it will be automatically removed
+        from the registry and will no longer be discoverable by other banks.
+      operationId: sendHeartbeat
+      security: []
+      parameters:
+        - name: bankId
+          in: path
+          required: true
+          description: The unique identifier of the sending bank
+          schema:
+            type: string
+            pattern: '^[A-Z]{3}\d{3}$'
+            example: "EST001"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HeartbeatRequest'
+            examples:
+              heartbeat:
+                summary: Heartbeat signal
+                value:
+                  timestamp: "2026-04-02T11:12:03Z"
+      responses:
+        '200':
+          description: Heartbeat received successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HeartbeatResponse'
+              examples:
+                heartbeatAccepted:
+                  summary: Heartbeat acknowledged
+                  value:
+                    bankId: "EST001"
+                    receivedAt: "2026-04-02T11:12:03Z"
+                    expiresAt: "2026-04-02T11:42:03Z"
+                    status: "active"
+        '404':
+          description: Bank not found or already removed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                bankNotFound:
+                  summary: Bank does not exist
+                  value:
+                    code: "BANK_NOT_FOUND"
+                    message: "Bank with ID 'EST001' not found or has been removed due to inactivity"
+        '410':
+          description: Bank has been removed due to inactivity
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                bankRemoved:
+                  summary: Bank removed from registry
+                  value:
+                    code: "BANK_REMOVED"
+                    message: "Bank 'EST001' has been removed from the registry due to inactivity. Please register again."
+
+components:
+  schemas:
+    BankRegistrationRequest:
+      type: object
+      required:
+        - name
+        - address
+        - publicKey
+      properties:
+        name:
+          type: string
+          description: The display name of the bank
+          minLength: 3
+          maxLength: 100
+          example: "Estonia Commercial Bank"
+        address:
+          type: string
+          format: uri
+          description: The publicly reachable endpoint for this bank
+          pattern: '^https?://.+'
+          example: "https://ecb.banking.example:8443"
+        publicKey:
+          type: string
+          description: The bank's public key for cryptographic verification
+          format: pem
+          minLength: 100
+          example: "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEEVs/o5+UW6c1x0O5JqZ2LxZ9m7Y3X5Z1C9xK9Y8Z7vL9Z1C9xK9Y8Z7vL9Z1C9xK9Y8Z7vL9Z1C9xK9Y8Z7vL9Z1C9xK9Y8Z7vL9Z1C9xK9Y8Z7vL9Z1C9xK9Y8Z7vL9Z1C9xK9Y8Z7vL9Z1C9xK9Y8Z7vL9Z1C9xK9Y8Z7vL9Z1C9xK9Y8Z7vL9A=="
+
+    BankRegistrationResponse:
+      type: object
+      required:
+        - bankId
+        - expiresAt
+      properties:
+        bankId:
+          type: string
+          description: The unique identifier assigned to this bank (3-letter country code + 3-digit number)
+          pattern: '^[A-Z]{3}\d{3}$'
+          example: "EST001"
+        expiresAt:
+          type: string
+          format: date-time
+          description: The timestamp after which this bank will be removed if no heartbeat is received
+          example: "2026-04-02T11:42:03Z"
+
+    BankDirectory:
+      type: object
+      required:
+        - banks
+      properties:
+        banks:
+          type: array
+          description: Array of currently registered and active banks
+          items:
+            $ref: '#/components/schemas/BankEntry'
+
+    BankEntry:
+      type: object
+      required:
+        - bankId
+        - name
+        - address
+        - publicKey
+        - lastHeartbeat
+        - status
+      properties:
+        bankId:
+          type: string
+          description: The unique identifier of the bank
+          pattern: '^[A-Z]{3}\d{3}$'
+          example: "EST001"
+        name:
+          type: string
+          description: The display name of the bank
+          example: "Estonia Commercial Bank"
+        address:
+          type: string
+          format: uri
+          description: The publicly reachable endpoint for this bank
+          example: "https://ecb.banking.example:8443"
+        publicKey:
+          type: string
+          description: The bank's public key for cryptographic verification
+          example: "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEEVs/o5+UW6c1x0O5JqZ2LxZ9m7Y3X5Z1C9xK9Y8Z7vL9Z1C9xK9Y8Z7vL9Z1A=="
+        lastHeartbeat:
+          type: string
+          format: date-time
+          description: The timestamp of the most recent heartbeat from this bank
+          example: "2026-04-02T11:10:00Z"
+        status:
+          type: string
+          enum: [active]
+          description: The current status of the bank (all banks in the directory are active)
+          example: "active"
+
+    BankDetails:
+      type: object
+      required:
+        - bankId
+        - name
+        - address
+        - publicKey
+        - lastHeartbeat
+        - status
+      properties:
+        bankId:
+          type: string
+          description: The unique identifier of the bank
+          pattern: '^[A-Z]{3}\d{3}$'
+          example: "EST001"
+        name:
+          type: string
+          description: The display name of the bank
+          example: "Estonia Commercial Bank"
+        address:
+          type: string
+          format: uri
+          description: The publicly reachable endpoint for this bank
+          example: "https://ecb.banking.example:8443"
+        publicKey:
+          type: string
+          description: The bank's public key for cryptographic verification
+          example: "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEEVs/o5+UW6c1x0O5JqZ2LxZ9m7Y3X5Z1C9xK9Y8Z7vL9Z1C9xK9Y8Z7vL9Z1A=="
+        lastHeartbeat:
+          type: string
+          format: date-time
+          description: The timestamp of the most recent heartbeat from this bank
+          example: "2026-04-02T11:10:00Z"
+        status:
+          type: string
+          enum: [active, inactive]
+          description: The current status of the bank
+          example: "active"
+
+    HeartbeatRequest:
+      type: object
+      required:
+        - timestamp
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+          description: The current timestamp when the heartbeat is being sent
+          example: "2026-04-02T11:12:03Z"
+
+    HeartbeatResponse:
+      type: object
+      required:
+        - bankId
+        - receivedAt
+        - expiresAt
+        - status
+      properties:
+        bankId:
+          type: string
+          description: The unique identifier of the bank sending the heartbeat
+          pattern: '^[A-Z]{3}\d{3}$'
+          example: "EST001"
+        receivedAt:
+          type: string
+          format: date-time
+          description: The timestamp when the central bank received the heartbeat
+          example: "2026-04-02T11:12:03Z"
+        expiresAt:
+          type: string
+          format: date-time
+          description: The timestamp after which this bank will be removed if no heartbeat is received
+          example: "2026-04-02T11:42:03Z"
+        status:
+          type: string
+          enum: [active]
+          description: The current status of the bank after receiving the heartbeat
+          example: "active"
+
+    Error:
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: string
+          description: A machine-readable error code
+          example: "BANK_NOT_FOUND"
+        message:
+          type: string
+          description: A human-readable error message
+          example: "Bank with ID 'EST001' not found or has been removed"
+
+  securitySchemes: {}
