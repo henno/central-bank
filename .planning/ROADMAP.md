@@ -15,8 +15,8 @@ Success criteria:
 **Plans:** 2 plans
 
 Plans:
-- [ ] 01-registry-and-accounts-01-PLAN.md — Central-bank registry, directory, heartbeat, and pruning contract
-- [ ] 01-registry-and-accounts-02-PLAN.md — Branch-bank user registration, account creation, and lookup contract
+- [x] 01-registry-and-accounts-01-PLAN.md — Central-bank registry, directory, heartbeat, and pruning contract
+- [x] 01-registry-and-accounts-02-PLAN.md — Branch-bank user registration, account creation, and lookup contract
 
 ## Phase 2: Same-Bank and Cross-Bank Transfers
 

@@ -13,10 +13,10 @@
 
 ### Accounts
 
-- [ ] **ACCT-01**: Bank can register a user.
-- [ ] **ACCT-02**: User can create a new account with a chosen currency.
-- [ ] **ACCT-03**: Account numbers are 8 characters long and the first 3 characters identify the bank.
-- [ ] **ACCT-04**: Unauthenticated lookup of an account number returns the account owner's name or 404 if the account does not exist.
+- [x] **ACCT-01**: Bank can register a user.
+- [x] **ACCT-02**: User can create a new account with a chosen currency.
+- [x] **ACCT-03**: Account numbers are 8 characters long and the first 3 characters identify the bank.
+- [x] **ACCT-04**: Unauthenticated lookup of an account number returns the account owner's name or 404 if the account does not exist.
 
 ### Transfers
 
@@ -54,10 +54,10 @@
 | REG-01 | Phase 1 | Pending |
 | REG-02 | Phase 1 | Pending |
 | REG-03 | Phase 1 | Pending |
-| ACCT-01 | Phase 1 | Pending |
-| ACCT-02 | Phase 1 | Pending |
-| ACCT-03 | Phase 1 | Pending |
-| ACCT-04 | Phase 1 | Pending |
+| ACCT-01 | Phase 1 | Complete |
+| ACCT-02 | Phase 1 | Complete |
+| ACCT-03 | Phase 1 | Complete |
+| ACCT-04 | Phase 1 | Complete |
 | XFER-01 | Phase 2 | Pending |
 | XFER-02 | Phase 2 | Pending |
 | XFER-03 | Phase 2 | Pending |
