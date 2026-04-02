@@ -1,0 +1,78 @@
+# Requirements: Distributed Banking System
+
+**Defined:** 2026-04-02
+**Core Value:** Banks must be able to discover, authenticate, and transfer money between each other reliably, even when the central bank or the destination bank is temporarily unavailable.
+
+## v1 Requirements
+
+### Registry
+
+- [ ] **REG-01**: Central bank can register a bank and store its public key and reachable address.
+- [ ] **REG-02**: Central bank can return the list of currently registered banks.
+- [ ] **REG-03**: Central bank removes a bank that has not sent a heartbeat within 30 minutes.
+
+### Accounts
+
+- [ ] **ACCT-01**: Bank can register a user.
+- [ ] **ACCT-02**: User can create a new account with a chosen currency.
+- [ ] **ACCT-03**: Account numbers are 8 characters long and the first 3 characters identify the bank.
+- [ ] **ACCT-04**: Unauthenticated lookup of an account number returns the account owner's name or 404 if the account does not exist.
+
+### Transfers
+
+- [ ] **XFER-01**: User can transfer funds between accounts in the same bank.
+- [ ] **XFER-02**: User can transfer funds to another bank using the destination account number.
+- [ ] **XFER-03**: Cross-bank transfers use the bank prefix to resolve the destination bank.
+- [ ] **XFER-04**: Cross-bank transfers convert currency at the current exchange rate when currencies differ.
+- [ ] **XFER-05**: Cross-bank transfers can proceed when the central bank is unavailable.
+- [ ] **XFER-06**: Cross-bank transfers can be marked pending when the destination bank is temporarily unavailable.
+- [ ] **XFER-07**: A pending transfer eventually succeeds or fails with timeout if the destination bank never comes back online.
+
+### Heartbeats
+
+- [ ] **HRTB-01**: Branch bank can send a heartbeat to the central bank.
+- [ ] **HRTB-02**: Central bank can use heartbeats to keep bank registry state fresh.
+
+## v2 Requirements
+
+### Contract Detail
+
+- **SPEC-01**: OpenAPI contract should include enough schema detail to implement both central and branch banks.
+- **SPEC-02**: OpenAPI contract should define examples for bank registration, account lookup, and transfer flows.
+
+## Out of Scope
+
+| Feature | Reason |
+|---------|--------|
+| End-user UI | Not requested; the deliverable is API documentation only |
+| Actual runtime implementation | The assignment starts with contract design, not code |
+
+## Traceability
+
+| Requirement | Phase | Status |
+|-------------|-------|--------|
+| REG-01 | Phase 1 | Pending |
+| REG-02 | Phase 1 | Pending |
+| REG-03 | Phase 1 | Pending |
+| ACCT-01 | Phase 1 | Pending |
+| ACCT-02 | Phase 1 | Pending |
+| ACCT-03 | Phase 1 | Pending |
+| ACCT-04 | Phase 1 | Pending |
+| XFER-01 | Phase 2 | Pending |
+| XFER-02 | Phase 2 | Pending |
+| XFER-03 | Phase 2 | Pending |
+| XFER-04 | Phase 2 | Pending |
+| XFER-05 | Phase 3 | Pending |
+| XFER-06 | Phase 3 | Pending |
+| XFER-07 | Phase 3 | Pending |
+| HRTB-01 | Phase 1 | Pending |
+| HRTB-02 | Phase 1 | Pending |
+
+**Coverage:**
+- v1 requirements: 16 total
+- Mapped to phases: 16
+- Unmapped: 0 ✓
+
+---
+*Requirements defined: 2026-04-02*
+*Last updated: 2026-04-02 after initialization*
