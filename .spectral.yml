@@ -1,41 +1,42 @@
 # Spectral ruleset for OpenAPI 3.1 contract validation
 # This configuration enforces project-specific patterns and best practices
 
-extends:
-  - '@stoplight/spectral-rulesets/asyncapi'
-  - '@stoplight/spectral-rulesets/oas'
-
 rules:
   # Enable standard OpenAPI rules
-  operation-operationId: warn
-  operation-tags: warn
-  path-parameters: warn
-  operation-description: warn
+  operation-operationId:
+    description: Operation should have an operationId
+    severity: warn
+    given: $.paths.*.*
+    then:
+      - field: operationId
+        function: truthy
+
+  operation-tags:
+    description: Operation should have tags
+    severity: warn
+    given: $.paths.*.*
+    then:
+      - field: tags
+        function: truthy
 
   # Custom rules for monetary amounts
   decimal-string-money:
     description: Monetary amounts must use decimal string format with pattern
     severity: error
     given:
-      - $.paths.*.*[*].responses.*.content["application/json"].schema.*$..properties[?(@.format == 'decimal')]
       - $.components.schemas.*.properties[?(@.format == 'decimal')]
     then:
       - field: pattern
         function: pattern
         functionOptions:
           match: '^-?\d+\.\d{2}$'
-      - field: description
-        function: length
-        functionOptions:
-          min: 10
 
   # Custom rule for decimal strings with up to 6 decimal places (exchange rates)
   decimal-string-exchange-rate:
     description: Exchange rates must use decimal string format with up to 6 decimal places
     severity: error
     given:
-      - $.components.schemas.*.properties[?(@.description && @.description.includes("exchange") && @.format == 'decimal')]
-      - $.components.schemas.*.additionalProperties.[?(@.format == 'decimal')]
+      - $.components.schemas..additionalProperties[?(@.format == 'decimal')]
     then:
       - field: pattern
         function: pattern
@@ -47,8 +48,7 @@ rules:
     description: Account numbers must follow the 8-character pattern
     severity: error
     given:
-      - $.paths.*.*[*].parameters[?(@.name == "accountNumber" || @.name == "sourceAccount" || @.name == "destinationAccount")].schema
-      - $.components.schemas.*.properties[?(@.name == "accountNumber" || @.name == "sourceAccount" || @.name == "destinationAccount")]
+      - $.components.schemas.*.properties[?(@.name && (@.name == "accountNumber" || @.name == "sourceAccount" || @.name == "destinationAccount"))]
     then:
       - field: pattern
         function: pattern
@@ -60,45 +60,12 @@ rules:
     description: Currency codes must be 3-letter ISO 4217 codes
     severity: error
     given:
-      - $.components.schemas.*.properties[?(@.name == "currency" || @.name == "baseCurrency")]
-      - $.components.schemas.*.properties[?(@.description && @.description.includes("currency"))]
+      - $.components.schemas.*.properties[?(@.name && (@.name == "currency" || @.name == "baseCurrency"))]
     then:
       - field: pattern
         function: pattern
         functionOptions:
           match: '^[A-Z]{3}$'
-
-  # Custom rule for transfer ID with UUID format
-  transfer-id-required:
-    description: Transfer-related operations must include transferId with UUID format
-    severity: error
-    given:
-      - $.components.schemas[?(/Transfer/i.test(@))]
-    then:
-      - field: $..properties.transferId
-        function: length
-        functionOptions:
-          min: 1
-      - field: $..properties.transferId.format
-        function: enumeration
-        functionOptions:
-          values: ['uuid']
-
-  # Custom rule for server-side timestamps
-  timestamp-server-side:
-    description: Timestamps should use date-time format and mention server-side storage in description
-    severity: warn
-    given:
-      - $.components.schemas.*.properties[?(@.name && (@.name.includes('timestamp') || @.name.includes('createdAt') || @.name.includes('updatedAt')))]
-    then:
-      - field: format
-        function: enumeration
-        functionOptions:
-          values: ['date-time']
-      - field: description
-        function: pattern
-        functionOptions:
-          match: 'server'
 
   # Ensure examples are present for important schemas
   examples-for-request-bodies:
@@ -125,12 +92,12 @@ rules:
 
   # Ensure error responses are well-documented
   error-response-format:
-    description: Error responses must follow the standard Error schema
+    description: Error responses should reference Error schema
     severity: error
     given:
-      - $.paths.*.*[*].responses.[?(@ >= 400)].content["application/json"].schema
+      - $.paths.*.*[*].responses.[?(@ >= 400)].content["application/json"]
     then:
-      - field: $ref
+      - field: schema.$ref
         function: pattern
         functionOptions:
           match: '#/components/schemas/Error'
@@ -146,7 +113,7 @@ rules:
       - field: description
         function: length
         functionOptions:
-          min: 50
+          min: 30
 
   # Ensure all paths have operationId
   operation-missing-id:

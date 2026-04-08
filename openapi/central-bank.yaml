@@ -6,7 +6,8 @@ info:
     The central bank acts as a discovery directory for branch banks in the distributed banking system.
 
     This API allows branch banks to register themselves, retrieve the directory of registered banks,
-    and send heartbeats to maintain their registration status.
+    send heartbeats to maintain their registration status, and query current exchange rates for
+    cross-bank currency conversions.
 
     Banks that do not send a heartbeat within 30 minutes are automatically removed from the registry.
 
@@ -30,6 +31,8 @@ tags:
     description: Bank registration and directory operations
   - name: Heartbeat
     description: Bank heartbeat lifecycle management
+  - name: ExchangeRates
+    description: Currency exchange rate operations
 
 paths:
   /banks:
@@ -268,13 +271,66 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
               examples:
-                bankRemoved:
-                  summary: Bank removed from registry
-                  value:
+                  bankRemoved:
+                    summary: Bank removed from registry
+                    value:
                     code: "BANK_REMOVED"
                     message: "Bank 'EST001' has been removed from the registry due to inactivity. Please register again."
 
-components:
+  /exchange-rates:
+    get:
+      tags:
+        - ExchangeRates
+      summary: Get current exchange rates
+      description: |
+        Returns the current exchange rates for all supported currencies.
+
+        **Rate Structure:**
+        - Rates are relative to the base currency (EUR per DEC-01)
+        - Rates are decimal strings to avoid precision issues
+        - Rates include up to 6 decimal places for finer precision
+
+        **Cross-Rate Calculation:**
+        To convert from currency A to currency B:
+        rate(A → B) = rate(base → B) / rate(base → A)
+
+        **Freshness:**
+        The timestamp indicates when these rates were last updated.
+        Banks should capture this timestamp when querying for audit purposes.
+      operationId: getExchangeRates
+      security: []
+      responses:
+        '200':
+          description: Exchange rates retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExchangeRatesResponse'
+              examples:
+                currentRates:
+                  summary: Current exchange rates
+                  value:
+                    baseCurrency: "EUR"
+                    rates:
+                      GBP: "0.850000"
+                      USD: "1.080000"
+                      SEK: "10.500000"
+                      LVL: "0.680000"
+                    timestamp: "2026-04-08T12:00:00Z"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Service temporarily unavailable (rates being updated)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  components:
   schemas:
     BankRegistrationRequest:
       type: object
@@ -462,5 +518,79 @@ components:
           type: string
           description: A human-readable error message
           example: "Bank with ID 'EST001' not found or has been removed"
+
+    ExchangeRatesResponse:
+      type: object
+      required:
+        - baseCurrency
+        - rates
+        - timestamp
+      properties:
+        baseCurrency:
+          type: string
+          description: |
+            The base currency for all exchange rates.
+
+            **Rate Interpretation:**
+            All rates are relative to this base currency.
+
+            **Example:**
+            If baseCurrency is "EUR" and rates = {"GBP": "0.85", "USD": "1.08"},
+            then:
+            - 1 EUR = 0.85 GBP
+            - 1 EUR = 1.08 USD
+
+            **Base Currency Decision (DEC-01):**
+            EUR is used as the base currency (consistent with Estonian banking context).
+            This is a deployment-time decision that can be changed per implementation.
+          pattern: '^[A-Z]{3}$'
+          example: "EUR"
+        rates:
+          type: object
+          description: |
+            Map of currency codes to exchange rates (all relative to baseCurrency).
+
+            **Rate Format:**
+            - String format to avoid precision issues
+            - Up to 6 decimal places for finer precision
+            - Rates are for 1 unit of baseCurrency
+
+            **Cross-Rate Calculation:**
+            To convert from currency A to currency B:
+            rate(A → B) = rate(base → B) / rate(base → A)
+
+            **Example:**
+            If baseCurrency = "EUR", rates = {"GBP": "0.85", "USD": "1.08"}
+            To convert 100 USD to GBP:
+            rate(USD → EUR) = 1 / 1.08 = 0.925926
+            rate(EUR → GBP) = 0.85
+            rate(USD → GBP) = 0.925926 * 0.85 = 0.787037
+            100 USD = 78.70 GBP
+          additionalProperties:
+            type: string
+            format: decimal
+            pattern: '^\d+\.\d{1,6}$'
+            description: Exchange rate relative to base currency
+            example: "0.850000"
+          example:
+            GBP: "0.850000"
+            USD: "1.080000"
+            SEK: "10.500000"
+            LVL: "0.680000"
+        timestamp:
+          type: string
+          format: date-time
+          description: |
+            The timestamp when these exchange rates were last updated.
+
+            **Freshness:**
+            Banks should capture this timestamp when querying rates to ensure
+            they're using reasonably current rates.
+
+            **Rate Freshness Policy (DEC-02):**
+            Phase 2 doesn't enforce a rate TTL. Implementations may choose to
+            reject older rates (e.g., > 1 hour old) or apply rate freshness policies.
+            Phase 3 may add rate caching policies if central bank unavailability is addressed.
+          example: "2026-04-08T12:00:00Z"
 
   securitySchemes: {}
