@@ -271,9 +271,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
               examples:
-                  bankRemoved:
-                    summary: Bank removed from registry
-                    value:
+                bankRemoved:
+                  summary: Bank removed from registry
+                  value:
                     code: "BANK_REMOVED"
                     message: "Bank 'EST001' has been removed from the registry due to inactivity. Please register again."
 
@@ -330,267 +330,267 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
 
-  components:
+components:
   schemas:
     BankRegistrationRequest:
-      type: object
-      required:
-        - name
-        - address
-        - publicKey
-      properties:
-        name:
-          type: string
-          description: The display name of the bank
-          minLength: 3
-          maxLength: 100
-          example: "Estonia Commercial Bank"
-        address:
-          type: string
-          format: uri
-          description: The publicly reachable endpoint for this bank
-          pattern: '^https?://.+'
-          example: "https://ecb.banking.example:8443"
-        publicKey:
-          type: string
-          description: The bank's public key for cryptographic verification
-          format: pem
-          minLength: 100
-          example: "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEEVs/o5+UW6c1x0O5JqZ2LxZ9m7Y3X5Z1C9xK9Y8Z7vL9Z1C9xK9Y8Z7vL9Z1C9xK9Y8Z7vL9Z1C9xK9Y8Z7vL9Z1C9xK9Y8Z7vL9Z1C9xK9Y8Z7vL9Z1C9xK9Y8Z7vL9Z1C9xK9Y8Z7vL9Z1C9xK9Y8Z7vL9Z1C9xK9Y8Z7vL9Z1C9xK9Y8Z7vL9A=="
+        type: object
+        required:
+          - name
+          - address
+          - publicKey
+        properties:
+          name:
+            type: string
+            description: The display name of the bank
+            minLength: 3
+            maxLength: 100
+            example: "Estonia Commercial Bank"
+          address:
+            type: string
+            format: uri
+            description: The publicly reachable endpoint for this bank
+            pattern: '^https?://.+'
+            example: "https://ecb.banking.example:8443"
+          publicKey:
+            type: string
+            description: The bank's public key for cryptographic verification
+            format: pem
+            minLength: 100
+            example: "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEEVs/o5+UW6c1x0O5JqZ2LxZ9m7Y3X5Z1C9xK9Y8Z7vL9Z1C9xK9Y8Z7vL9Z1C9xK9Y8Z7vL9Z1C9xK9Y8Z7vL9Z1C9xK9Y8Z7vL9Z1C9xK9Y8Z7vL9Z1C9xK9Y8Z7vL9Z1C9xK9Y8Z7vL9Z1C9xK9Y8Z7vL9Z1C9xK9Y8Z7vL9Z1C9xK9Y8Z7vL9A=="
 
     BankRegistrationResponse:
-      type: object
-      required:
-        - bankId
-        - expiresAt
-      properties:
-        bankId:
-          type: string
-          description: The unique identifier assigned to this bank (3-letter country code + 3-digit number)
-          pattern: '^[A-Z]{3}\d{3}$'
-          example: "EST001"
-        expiresAt:
-          type: string
-          format: date-time
-          description: The timestamp after which this bank will be removed if no heartbeat is received
-          example: "2026-04-02T11:42:03Z"
+        type: object
+        required:
+          - bankId
+          - expiresAt
+        properties:
+          bankId:
+            type: string
+            description: The unique identifier assigned to this bank (3-letter country code + 3-digit number)
+            pattern: '^[A-Z]{3}\d{3}$'
+            example: "EST001"
+          expiresAt:
+            type: string
+            format: date-time
+            description: The timestamp after which this bank will be removed if no heartbeat is received
+            example: "2026-04-02T11:42:03Z"
 
     BankDirectory:
-      type: object
-      required:
-        - banks
-      properties:
-        banks:
-          type: array
-          description: Array of currently registered and active banks
-          items:
-            $ref: '#/components/schemas/BankEntry'
+        type: object
+        required:
+          - banks
+        properties:
+          banks:
+            type: array
+            description: Array of currently registered and active banks
+            items:
+              $ref: '#/components/schemas/BankEntry'
 
     BankEntry:
-      type: object
-      required:
-        - bankId
-        - name
-        - address
-        - publicKey
-        - lastHeartbeat
-        - status
-      properties:
-        bankId:
-          type: string
-          description: The unique identifier of the bank
-          pattern: '^[A-Z]{3}\d{3}$'
-          example: "EST001"
-        name:
-          type: string
-          description: The display name of the bank
-          example: "Estonia Commercial Bank"
-        address:
-          type: string
-          format: uri
-          description: The publicly reachable endpoint for this bank
-          example: "https://ecb.banking.example:8443"
-        publicKey:
-          type: string
-          description: The bank's public key for cryptographic verification
-          example: "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEEVs/o5+UW6c1x0O5JqZ2LxZ9m7Y3X5Z1C9xK9Y8Z7vL9Z1C9xK9Y8Z7vL9Z1A=="
-        lastHeartbeat:
-          type: string
-          format: date-time
-          description: The timestamp of the most recent heartbeat from this bank
-          example: "2026-04-02T11:10:00Z"
-        status:
-          type: string
-          enum: [active]
-          description: The current status of the bank (all banks in the directory are active)
-          example: "active"
+        type: object
+        required:
+          - bankId
+          - name
+          - address
+          - publicKey
+          - lastHeartbeat
+          - status
+        properties:
+          bankId:
+            type: string
+            description: The unique identifier of the bank
+            pattern: '^[A-Z]{3}\d{3}$'
+            example: "EST001"
+          name:
+            type: string
+            description: The display name of the bank
+            example: "Estonia Commercial Bank"
+          address:
+            type: string
+            format: uri
+            description: The publicly reachable endpoint for this bank
+            example: "https://ecb.banking.example:8443"
+          publicKey:
+            type: string
+            description: The bank's public key for cryptographic verification
+            example: "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEEVs/o5+UW6c1x0O5JqZ2LxZ9m7Y3X5Z1C9xK9Y8Z7vL9Z1C9xK9Y8Z7vL9Z1A=="
+          lastHeartbeat:
+            type: string
+            format: date-time
+            description: The timestamp of the most recent heartbeat from this bank
+            example: "2026-04-02T11:10:00Z"
+          status:
+            type: string
+            enum: [active]
+            description: The current status of the bank (all banks in the directory are active)
+            example: "active"
 
     BankDetails:
-      type: object
-      required:
-        - bankId
-        - name
-        - address
-        - publicKey
-        - lastHeartbeat
-        - status
-      properties:
-        bankId:
-          type: string
-          description: The unique identifier of the bank
-          pattern: '^[A-Z]{3}\d{3}$'
-          example: "EST001"
-        name:
-          type: string
-          description: The display name of the bank
-          example: "Estonia Commercial Bank"
-        address:
-          type: string
-          format: uri
-          description: The publicly reachable endpoint for this bank
-          example: "https://ecb.banking.example:8443"
-        publicKey:
-          type: string
-          description: The bank's public key for cryptographic verification
-          example: "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEEVs/o5+UW6c1x0O5JqZ2LxZ9m7Y3X5Z1C9xK9Y8Z7vL9Z1C9xK9Y8Z7vL9Z1A=="
-        lastHeartbeat:
-          type: string
-          format: date-time
-          description: The timestamp of the most recent heartbeat from this bank
-          example: "2026-04-02T11:10:00Z"
-        status:
-          type: string
-          enum: [active, inactive]
-          description: The current status of the bank
-          example: "active"
+        type: object
+        required:
+          - bankId
+          - name
+          - address
+          - publicKey
+          - lastHeartbeat
+          - status
+        properties:
+          bankId:
+            type: string
+            description: The unique identifier of the bank
+            pattern: '^[A-Z]{3}\d{3}$'
+            example: "EST001"
+          name:
+            type: string
+            description: The display name of the bank
+            example: "Estonia Commercial Bank"
+          address:
+            type: string
+            format: uri
+            description: The publicly reachable endpoint for this bank
+            example: "https://ecb.banking.example:8443"
+          publicKey:
+            type: string
+            description: The bank's public key for cryptographic verification
+            example: "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEEVs/o5+UW6c1x0O5JqZ2LxZ9m7Y3X5Z1C9xK9Y8Z7vL9Z1C9xK9Y8Z7vL9Z1A=="
+          lastHeartbeat:
+            type: string
+            format: date-time
+            description: The timestamp of the most recent heartbeat from this bank
+            example: "2026-04-02T11:10:00Z"
+          status:
+            type: string
+            enum: [active, inactive]
+            description: The current status of the bank
+            example: "active"
 
     HeartbeatRequest:
-      type: object
-      required:
-        - timestamp
-      properties:
-        timestamp:
-          type: string
-          format: date-time
-          description: The current timestamp when the heartbeat is being sent
-          example: "2026-04-02T11:12:03Z"
+        type: object
+        required:
+          - timestamp
+        properties:
+          timestamp:
+            type: string
+            format: date-time
+            description: The current timestamp when the heartbeat is being sent
+            example: "2026-04-02T11:12:03Z"
 
     HeartbeatResponse:
-      type: object
-      required:
-        - bankId
-        - receivedAt
-        - expiresAt
-        - status
-      properties:
-        bankId:
-          type: string
-          description: The unique identifier of the bank sending the heartbeat
-          pattern: '^[A-Z]{3}\d{3}$'
-          example: "EST001"
-        receivedAt:
-          type: string
-          format: date-time
-          description: The timestamp when the central bank received the heartbeat
-          example: "2026-04-02T11:12:03Z"
-        expiresAt:
-          type: string
-          format: date-time
-          description: The timestamp after which this bank will be removed if no heartbeat is received
-          example: "2026-04-02T11:42:03Z"
-        status:
-          type: string
-          enum: [active]
-          description: The current status of the bank after receiving the heartbeat
-          example: "active"
+        type: object
+        required:
+          - bankId
+          - receivedAt
+          - expiresAt
+          - status
+        properties:
+          bankId:
+            type: string
+            description: The unique identifier of the bank sending the heartbeat
+            pattern: '^[A-Z]{3}\d{3}$'
+            example: "EST001"
+          receivedAt:
+            type: string
+            format: date-time
+            description: The timestamp when the central bank received the heartbeat
+            example: "2026-04-02T11:12:03Z"
+          expiresAt:
+            type: string
+            format: date-time
+            description: The timestamp after which this bank will be removed if no heartbeat is received
+            example: "2026-04-02T11:42:03Z"
+          status:
+            type: string
+            enum: [active]
+            description: The current status of the bank after receiving the heartbeat
+            example: "active"
 
     Error:
-      type: object
-      required:
-        - code
-        - message
-      properties:
-        code:
-          type: string
-          description: A machine-readable error code
-          example: "BANK_NOT_FOUND"
-        message:
-          type: string
-          description: A human-readable error message
-          example: "Bank with ID 'EST001' not found or has been removed"
+        type: object
+        required:
+          - code
+          - message
+        properties:
+          code:
+            type: string
+            description: A machine-readable error code
+            example: "BANK_NOT_FOUND"
+          message:
+            type: string
+            description: A human-readable error message
+            example: "Bank with ID 'EST001' not found or has been removed"
 
     ExchangeRatesResponse:
-      type: object
-      required:
-        - baseCurrency
-        - rates
-        - timestamp
-      properties:
-        baseCurrency:
-          type: string
-          description: |
-            The base currency for all exchange rates.
-
-            **Rate Interpretation:**
-            All rates are relative to this base currency.
-
-            **Example:**
-            If baseCurrency is "EUR" and rates = {"GBP": "0.85", "USD": "1.08"},
-            then:
-            - 1 EUR = 0.85 GBP
-            - 1 EUR = 1.08 USD
-
-            **Base Currency Decision (DEC-01):**
-            EUR is used as the base currency (consistent with Estonian banking context).
-            This is a deployment-time decision that can be changed per implementation.
-          pattern: '^[A-Z]{3}$'
-          example: "EUR"
-        rates:
-          type: object
-          description: |
-            Map of currency codes to exchange rates (all relative to baseCurrency).
-
-            **Rate Format:**
-            - String format to avoid precision issues
-            - Up to 6 decimal places for finer precision
-            - Rates are for 1 unit of baseCurrency
-
-            **Cross-Rate Calculation:**
-            To convert from currency A to currency B:
-            rate(A → B) = rate(base → B) / rate(base → A)
-
-            **Example:**
-            If baseCurrency = "EUR", rates = {"GBP": "0.85", "USD": "1.08"}
-            To convert 100 USD to GBP:
-            rate(USD → EUR) = 1 / 1.08 = 0.925926
-            rate(EUR → GBP) = 0.85
-            rate(USD → GBP) = 0.925926 * 0.85 = 0.787037
-            100 USD = 78.70 GBP
-          additionalProperties:
+        type: object
+        required:
+          - baseCurrency
+          - rates
+          - timestamp
+        properties:
+          baseCurrency:
             type: string
-            format: decimal
-            pattern: '^\d+\.\d{1,6}$'
-            description: Exchange rate relative to base currency
-            example: "0.850000"
-          example:
-            GBP: "0.850000"
-            USD: "1.080000"
-            SEK: "10.500000"
-            LVL: "0.680000"
-        timestamp:
-          type: string
-          format: date-time
-          description: |
-            The timestamp when these exchange rates were last updated.
+            description: |
+              The base currency for all exchange rates.
 
-            **Freshness:**
-            Banks should capture this timestamp when querying rates to ensure
-            they're using reasonably current rates.
+              **Rate Interpretation:**
+              All rates are relative to this base currency.
 
-            **Rate Freshness Policy (DEC-02):**
-            Phase 2 doesn't enforce a rate TTL. Implementations may choose to
-            reject older rates (e.g., > 1 hour old) or apply rate freshness policies.
-            Phase 3 may add rate caching policies if central bank unavailability is addressed.
-          example: "2026-04-08T12:00:00Z"
+              **Example:**
+              If baseCurrency is "EUR" and rates = {"GBP": "0.85", "USD": "1.08"},
+              then:
+              - 1 EUR = 0.85 GBP
+              - 1 EUR = 1.08 USD
 
-  securitySchemes: {}
+              **Base Currency Decision (DEC-01):**
+              EUR is used as the base currency (consistent with Estonian banking context).
+              This is a deployment-time decision that can be changed per implementation.
+            pattern: '^[A-Z]{3}$'
+            example: "EUR"
+          rates:
+            type: object
+            description: |
+              Map of currency codes to exchange rates (all relative to baseCurrency).
+
+              **Rate Format:**
+              - String format to avoid precision issues
+              - Up to 6 decimal places for finer precision
+              - Rates are for 1 unit of baseCurrency
+
+              **Cross-Rate Calculation:**
+              To convert from currency A to currency B:
+              rate(A → B) = rate(base → B) / rate(base → A)
+
+              **Example:**
+              If baseCurrency = "EUR", rates = {"GBP": "0.85", "USD": "1.08"}
+              To convert 100 USD to GBP:
+              rate(USD → EUR) = 1 / 1.08 = 0.925926
+              rate(EUR → GBP) = 0.85
+              rate(USD → GBP) = 0.925926 * 0.85 = 0.787037
+              100 USD = 78.70 GBP
+            additionalProperties:
+              type: string
+              format: decimal
+              pattern: '^\d+\.\d{1,6}$'
+              description: Exchange rate relative to base currency
+              example: "0.850000"
+            example:
+              GBP: "0.850000"
+              USD: "1.080000"
+              SEK: "10.500000"
+              LVL: "0.680000"
+          timestamp:
+            type: string
+            format: date-time
+            description: |
+              The timestamp when these exchange rates were last updated.
+
+              **Freshness:**
+              Banks should capture this timestamp when querying rates to ensure
+              they're using reasonably current rates.
+
+              **Rate Freshness Policy (DEC-02):**
+              Phase 2 doesn't enforce a rate TTL. Implementations may choose to
+              reject older rates (e.g., > 1 hour old) or apply rate freshness policies.
+              Phase 3 may add rate caching policies if central bank unavailability is addressed.
+            example: "2026-04-08T12:00:00Z"
+
+    securitySchemes: {}
