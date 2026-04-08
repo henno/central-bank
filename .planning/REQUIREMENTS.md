@@ -7,9 +7,9 @@
 
 ### Registry
 
-- [ ] **REG-01**: Central bank can register a bank and store its public key and reachable address.
-- [ ] **REG-02**: Central bank can return the list of currently registered banks.
-- [ ] **REG-03**: Central bank removes a bank that has not sent a heartbeat within 30 minutes.
+- [x] **REG-01**: Central bank can register a bank and store its public key and reachable address.
+- [x] **REG-02**: Central bank can return the list of currently registered banks.
+- [x] **REG-03**: Central bank removes a bank that has not sent a heartbeat within 30 minutes.
 
 ### Accounts
 
@@ -24,14 +24,14 @@
 - [x] **XFER-02**: User can transfer funds to another bank using the destination account number.
 - [x] **XFER-03**: Cross-bank transfers use the bank prefix to resolve the destination bank.
 - [x] **XFER-04**: Cross-bank transfers convert currency at the current exchange rate when currencies differ.
-- [ ] **XFER-05**: Cross-bank transfers can proceed when the central bank is unavailable.
-- [ ] **XFER-06**: Cross-bank transfers can be marked pending when the destination bank is temporarily unavailable.
-- [ ] **XFER-07**: A pending transfer eventually succeeds or fails with timeout if the destination bank never comes back online.
+- [x] **XFER-05**: Cross-bank transfers can proceed when the central bank is unavailable.
+- [x] **XFER-06**: Cross-bank transfers can be marked pending when the destination bank is temporarily unavailable.
+- [x] **XFER-07**: A pending transfer eventually succeeds or fails with timeout if the destination bank never comes back online.
 
 ### Heartbeats
 
-- [ ] **HRTB-01**: Branch bank can send a heartbeat to the central bank.
-- [ ] **HRTB-02**: Central bank can use heartbeats to keep bank registry state fresh.
+- [x] **HRTB-01**: Branch bank can send a heartbeat to the central bank.
+- [x] **HRTB-02**: Central bank can use heartbeats to keep bank registry state fresh.
 
 ## v2 Requirements
 
@@ -51,9 +51,9 @@
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| REG-01 | Phase 1 | Pending |
-| REG-02 | Phase 1 | Pending |
-| REG-03 | Phase 1 | Pending |
+| REG-01 | Phase 1 | Complete |
+| REG-02 | Phase 1 | Complete |
+| REG-03 | Phase 1 | Complete |
 | ACCT-01 | Phase 1 | Complete |
 | ACCT-02 | Phase 1 | Complete |
 | ACCT-03 | Phase 1 | Complete |
@@ -62,11 +62,11 @@
 | XFER-02 | Phase 2 | Complete |
 | XFER-03 | Phase 2 | Complete |
 | XFER-04 | Phase 2 | Complete |
-| XFER-05 | Phase 3 | Pending |
-| XFER-06 | Phase 3 | Pending |
-| XFER-07 | Phase 3 | Pending |
-| HRTB-01 | Phase 1 | Pending |
-| HRTB-02 | Phase 1 | Pending |
+| XFER-05 | Phase 3 | Complete |
+| XFER-06 | Phase 3 | Complete |
+| XFER-07 | Phase 3 | Complete |
+| HRTB-01 | Phase 1 | Complete |
+| HRTB-02 | Phase 1 | Complete |
 
 **Coverage:**
 - v1 requirements: 16 total

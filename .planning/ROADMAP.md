@@ -50,5 +50,5 @@ Success criteria:
 **Plans:** 2 plans
 
 Plans:
-- [ ] 03-resilient-delivery-01-PLAN.md — Central bank directory with cache metadata for unavailability handling
-- [ ] 03-resilient-delivery-02-PLAN.md — Branch bank pending transfers, timeout handling, and new error codes
+- [x] 03-resilient-delivery-01-PLAN.md — Central bank directory with cache metadata for unavailability handling (SUMMARY: ✅ complete)
+- [x] 03-resilient-delivery-02-PLAN.md — Branch bank pending transfers, timeout handling, and new error codes (SUMMARY: ✅ complete)

@@ -6,13 +6,13 @@ See: .planning/PROJECT.md (updated 2026-04-02)
 
 **Core value:** Banks must be able to discover, authenticate, and transfer money between each other reliably, even when the central bank or the destination bank is temporarily unavailable.
 
-**Current focus:** Phase 2: Same-Bank and Cross-Bank Transfers
+**Current focus:** Phase 3: Resilient Delivery
 
 ## Current Position
 
-**Phase:** 02-same-bank-and-cross-bank-transfers
+**Phase:** 03-resilient-delivery
 **Status:** ✅ Complete
-**Verification:** Passed
+**Verification:** Ready
 **Date:** 2026-04-08
 
 ## Milestones
@@ -23,6 +23,8 @@ See: .planning/PROJECT.md (updated 2026-04-02)
 - Phase 1 Plan 1: Central-bank contract ✅
 - Phase 1 Plan 2: Branch-bank contract ✅
 - Phase 2 Plan 1: Transfer endpoints ✅
+- Phase 3 Plan 1: Central bank directory with cache metadata ✅
+- Phase 3 Plan 2: Branch bank pending transfers, timeout handling, new error codes ✅
 
 ## Notes
 
@@ -51,14 +53,22 @@ This project is contract-first and currently has no application implementation.
 - GET /transfers/{transferId} included in Phase 2 (DEC-04)
 - Inter-bank request body contains only JWT field (DEC-05)
 
+**From Phase 03-resilient-delivery:**
+- Central Bank Caching: Branch banks cache full bank directory locally with lastSyncedAt timestamp
+- Pending Transfer Lifecycle: Mark as pending and immediately deduct funds from source account
+- Retry Strategy: Exponential backoff (1m → 2m → 4m → ... → 1h) up to 4-hour timeout
+- Timeout Handling: 4-hour timeout with automatic refund to source account, status = failed_timeout
+- New Error Codes: DESTINATION_BANK_UNAVAILABLE (503), CENTRAL_BANK_UNAVAILABLE (503), TRANSFER_TIMEOUT (423), TRANSFER_ALREADY_PENDING (409)
+
 ## Session
 
-**Last session:** 2026-04-08T12:00:00Z - 2026-04-08T12:30:00Z
-**Stopped at:** Completed 02-same-bank-and-cross-bank-transfers-01-PLAN.md
+**Last session:** 2026-04-08T12:18:33Z - 2026-04-08T12:28:00Z
+**Stopped at:** Completed Phase 3: Resilient Delivery (both plans)
 
 ## Performance Metrics
 
-| Phase | Plan | Tasks | Files | Duration | Date |
-|-------|------|-------|-------|----------|------|
-| 01-registry-and-accounts | 02 | 2 | 1 | 1min | 2026-04-02 |
-| 02-same-bank-and-cross-bank-transfers | 01 | 4 | 3 | 30min | 2026-04-08 |
+| Phase | Plans | Tasks | Files | Duration | Date |
+|-------|-------|-------|-------|----------|------|
+| 01-registry-and-accounts | 2/2 | 2 | 1 | 1min | 2026-04-02 |
+| 02-same-bank-and-cross-bank-transfers | 1/1 | 4 | 3 | 30min | 2026-04-08 |
+| 03-resilient-delivery | 2/2 | 4 | 2 | 10min | 2026-04-08 |
