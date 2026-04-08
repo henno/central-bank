@@ -103,6 +103,7 @@ paths:
       description: |
         Returns the complete directory of currently registered banks.
         The list includes only active banks that have sent a heartbeat within the last 30 minutes.
+        Includes a lastSyncedAt timestamp for cache freshness tracking, enabling branch banks to operate with cached directory data when the central bank is temporarily unavailable (XFER-05).
       operationId: listBanks
       security: []
       responses:
@@ -120,15 +121,16 @@ paths:
                       - bankId: "EST001"
                         name: "Estonia Commercial Bank"
                         address: "https://ecb.banking.example:8443"
-                        publicKey: "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEEVs/o5+UW6c1x0O5JqZ2LxZ9m7Y3X5Z1C9xK9Y8Z7vL9Z1C9xK9Y8Z7vL9Z1A=="
+                        publicKey: "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEEVs/o5+UW6c1x0O5JqZ2LxZ9m7Y3X5Z1C9xK9Y8Z7vL9Z1A=="
                         lastHeartbeat: "2026-04-02T11:10:00Z"
                         status: "active"
                       - bankId: "LAT002"
                         name: "Latvia Savings Bank"
                         address: "https://lsb.banking.example:8443"
-                        publicKey: "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAzK9Y8Z7vL9Z1C9xK9Y8Z7vL9Z1C9xK9Y8Z7vL9Z1C9xK9Y8Z7vL9Z1C9xK9Y8Z7vL9Z1A=="
+                        publicKey: "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAzK9Y8Z7vL9Z1A=="
                         lastHeartbeat: "2026-04-02T11:12:00Z"
                         status: "active"
+                    lastSyncedAt: "2026-04-08T12:00:00Z"
         '500':
           description: Internal server error
           content:
@@ -379,12 +381,29 @@ components:
         type: object
         required:
           - banks
+          - lastSyncedAt
         properties:
           banks:
             type: array
             description: Array of currently registered and active banks
             items:
               $ref: '#/components/schemas/BankEntry'
+          lastSyncedAt:
+            type: string
+            format: date-time
+            description: |
+              The timestamp when the bank directory was last refreshed.
+
+              **Cache Freshness Tracking (XFER-05):**
+              Branch banks cache the full directory locally and use this timestamp
+              to track cache freshness. When the central bank is unavailable,
+              branch banks can continue routing transfers using cached data.
+
+              **Caching Strategy:**
+              Banks download the full directory on startup and periodically refresh.
+              This timestamp indicates when the directory was last updated from
+              the authoritative source.
+            example: "2026-04-08T12:00:00Z"
 
     BankEntry:
         type: object
