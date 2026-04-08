@@ -520,6 +520,18 @@ paths:
               schema:
                 $ref: '#/components/schemas/TransferStatusResponse'
               examples:
+                pendingTransfer:
+                  summary: Transfer pending (destination bank unavailable)
+                  value:
+                    transferId: "770e4033-j50e-64i7-f370-001122334455"
+                    status: "pending"
+                    sourceAccount: "EST12345"
+                    destinationAccount: "LAT22222"
+                    amount: "500.00"
+                    pendingSince: "2026-04-08T14:00:00Z"
+                    nextRetryAt: "2026-04-08T14:01:00Z"
+                    retryCount: 1
+                    timestamp: "2026-04-08T14:00:05Z"
                 completedTransfer:
                   summary: Transfer completed
                   value:
@@ -539,6 +551,16 @@ paths:
                     amount: "1000.00"
                     timestamp: "2026-04-08T12:01:00Z"
                     errorMessage: "Insufficient funds in source account"
+                timeoutFailedTransfer:
+                  summary: Transfer failed due to timeout
+                  value:
+                    transferId: "880e3944-j64f-85h8-e261-001122334455"
+                    status: "failed_timeout"
+                    sourceAccount: "EST11111"
+                    destinationAccount: "LAT22222"
+                    amount: "1000.00"
+                    timestamp: "2026-04-08T18:00:00Z"
+                    errorMessage: "Transfer timed out after 4 hours. Funds refunded to source account."
         '401':
           description: Unauthorized
           content:
@@ -784,11 +806,12 @@ components:
           example: "550e8400-e29b-41d4-a716-446655440000"
         status:
           type: string
-          enum: [completed, failed, pending]
+          enum: [completed, failed, pending, failed_timeout]
           description: |
             completed: Transfer succeeded
-            failed: Transfer failed
-            pending: Phase 3 feature
+            failed: Transfer failed permanently
+            pending: Transfer is being retried (destination bank unavailable)
+            failed_timeout: Transfer failed due to timeout expiration with automatic refund
           example: "completed"
         sourceAccount:
           type: string
@@ -889,7 +912,12 @@ components:
           example: "550e8400-e29b-41d4-a716-446655440000"
         status:
           type: string
-          enum: [completed, failed, pending]
+          enum: [completed, failed, pending, failed_timeout]
+          description: |
+            completed: Transfer succeeded
+            failed: Transfer failed permanently
+            pending: Transfer is being retried (destination bank unavailable)
+            failed_timeout: Transfer failed due to timeout expiration with automatic refund
           example: "completed"
         sourceAccount:
           type: string
