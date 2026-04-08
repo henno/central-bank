@@ -416,6 +416,11 @@ paths:
                   value:
                     code: "DUPLICATE_TRANSFER"
                     message: "A transfer with ID '550e8400-e29b-41d4-a716-446655440000' already exists"
+                transferAlreadyPending:
+                  summary: Transfer already pending
+                  value:
+                    code: "TRANSFER_ALREADY_PENDING"
+                    message: "Transfer with ID '550e8400-e29b-41d4-a716-446655440000' is already pending. Cannot submit duplicate transfer."
         '422':
           description: Unprocessable entity
           content:
@@ -434,6 +439,17 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+              examples:
+                destinationBankUnavailable:
+                  summary: Destination bank unavailable
+                  value:
+                    code: "DESTINATION_BANK_UNAVAILABLE"
+                    message: "Destination bank is temporarily unavailable. Transfer has been queued for retry."
+                centralBankUnavailable:
+                  summary: Central bank unavailable
+                  value:
+                    code: "CENTRAL_BANK_UNAVAILABLE"
+                    message: "Central bank is temporarily unavailable. Using cached directory data for routing."
 
   /transfers/receive:
     post:
@@ -579,6 +595,18 @@ paths:
                   value:
                     code: "TRANSFER_NOT_FOUND"
                     message: "Transfer with ID '550e8400-e29b-41d4-a716-446655440000' not found"
+        '423':
+          description: Transfer is locked
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                transferTimeout:
+                  summary: Transfer timed out
+                  value:
+                    code: "TRANSFER_TIMEOUT"
+                    message: "Transfer has timed out and cannot be modified or retried. Status is failed_timeout with refund processed."
 
 components:
   schemas:
@@ -953,6 +981,26 @@ components:
           type: string
           format: date-time
           example: "2026-04-08T12:00:15Z"
+        pendingSince:
+          type: string
+          format: date-time
+          description: |
+            Present only when status = pending. Indicates when the transfer was first marked as pending.
+            Used to calculate timeout expiration (4-hour window).
+          example: "2026-04-08T14:00:00Z"
+        nextRetryAt:
+          type: string
+          format: date-time
+          description: |
+            Present only when status = pending. Indicates when the next retry attempt is scheduled.
+            Follows exponential backoff schedule (1m → 2m → 4m → ... → 1h).
+          example: "2026-04-08T14:01:00Z"
+        retryCount:
+          type: integer
+          minimum: 0
+          description: |
+            Present only when status = pending. Number of retry attempts made so far.
+          example: 1
         errorMessage:
           type: string
           description: Present only when status = failed
