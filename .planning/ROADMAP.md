@@ -30,6 +30,11 @@ Success criteria:
 3. Currency conversion behavior is defined.
 4. Transfer request and response schemas are precise enough to implement.
 
+**Plans:** 1 plan
+
+Plans:
+- [ ] 02-same-bank-and-cross-bank-transfers-01-PLAN.md — Transfer endpoints, exchange rates, and inter-bank authentication
+
 ## Phase 3: Resilient Delivery
 
 Goal: Define how transfers survive temporary service outages.
