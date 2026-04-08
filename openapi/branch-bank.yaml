@@ -331,8 +331,39 @@ paths:
       summary: Initiate a fund transfer
       description: |
         Initiates a fund transfer from a source account to a destination account.
-        Follows locked design decisions D-01 (routing by bank prefix), D-05 (idempotency), XFER-04 (currency conversion),
-        and D-04 (JWT authentication for cross-bank).
+
+        **Routing (D-01):**
+        Branch bank determines routing by inspecting destination account's bank prefix (first 3 characters).
+        Same-bank transfers execute directly; cross-bank transfers route via POST /transfers/receive.
+
+        **Idempotency (D-05):**
+        Each transfer requires a unique transferId (UUID format). Duplicate transferId values are rejected.
+
+        **Currency Conversion (XFER-04):**
+        Cross-bank transfers convert currency at current exchange rate from central bank (D-03).
+
+        **Cross-Bank Authentication (D-04):**
+        Inter-bank transfers use JWT signed with source bank's private key (ES256 algorithm).
+
+        **Resilient Delivery (Phase 3):**
+
+        **Pending Transfers (XFER-06):**
+        When destination bank is unavailable during cross-bank transfer:
+        - Status is set to "pending" with immediate fund deduction from source account
+        - Transfer is queued with exponential backoff retry (1m → 2m → 4m → ... → 1h)
+        - Funds remain locked until transfer succeeds, fails permanently, or times out
+        - Duplicate transferId submission returns 409: TRANSFER_ALREADY_PENDING
+
+        **Central Bank Unavailability (XFER-05):**
+        When central bank directory service is unavailable:
+        - Branch banks use cached bank directory data for routing
+        - Returns 503: CENTRAL_BANK_UNAVAILABLE (transfer proceeds using cache)
+
+        **Timeout Handling (XFER-07):**
+        Pending transfers expire after 4 hours:
+        - Status changes to "failed_timeout"
+        - Funds are automatically refunded to source account
+        - Modification attempts return 423: TRANSFER_TIMEOUT
       operationId: initiateTransfer
       security:
         - BearerAuth: []
