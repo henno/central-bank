@@ -33,7 +33,7 @@ Success criteria:
 **Plans:** 1 plan
 
 Plans:
-- [ ] 02-same-bank-and-cross-bank-transfers-01-PLAN.md — Transfer endpoints, exchange rates, and inter-bank authentication
+- [x] 02-same-bank-and-cross-bank-transfers-01-PLAN.md — Transfer endpoints, exchange rates, and inter-bank authentication (SUMMARY: ✅ complete)
 
 ## Phase 3: Resilient Delivery
 

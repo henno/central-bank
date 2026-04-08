@@ -20,10 +20,10 @@
 
 ### Transfers
 
-- [ ] **XFER-01**: User can transfer funds between accounts in the same bank.
-- [ ] **XFER-02**: User can transfer funds to another bank using the destination account number.
-- [ ] **XFER-03**: Cross-bank transfers use the bank prefix to resolve the destination bank.
-- [ ] **XFER-04**: Cross-bank transfers convert currency at the current exchange rate when currencies differ.
+- [x] **XFER-01**: User can transfer funds between accounts in the same bank.
+- [x] **XFER-02**: User can transfer funds to another bank using the destination account number.
+- [x] **XFER-03**: Cross-bank transfers use the bank prefix to resolve the destination bank.
+- [x] **XFER-04**: Cross-bank transfers convert currency at the current exchange rate when currencies differ.
 - [ ] **XFER-05**: Cross-bank transfers can proceed when the central bank is unavailable.
 - [ ] **XFER-06**: Cross-bank transfers can be marked pending when the destination bank is temporarily unavailable.
 - [ ] **XFER-07**: A pending transfer eventually succeeds or fails with timeout if the destination bank never comes back online.
@@ -58,10 +58,10 @@
 | ACCT-02 | Phase 1 | Complete |
 | ACCT-03 | Phase 1 | Complete |
 | ACCT-04 | Phase 1 | Complete |
-| XFER-01 | Phase 2 | Pending |
-| XFER-02 | Phase 2 | Pending |
-| XFER-03 | Phase 2 | Pending |
-| XFER-04 | Phase 2 | Pending |
+| XFER-01 | Phase 2 | Complete |
+| XFER-02 | Phase 2 | Complete |
+| XFER-03 | Phase 2 | Complete |
+| XFER-04 | Phase 2 | Complete |
 | XFER-05 | Phase 3 | Pending |
 | XFER-06 | Phase 3 | Pending |
 | XFER-07 | Phase 3 | Pending |
