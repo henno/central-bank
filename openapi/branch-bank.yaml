@@ -4,10 +4,11 @@ info:
   version: 1.0.0
   description: |
     The branch bank API provides user-facing operations for account lifecycle management
-    in the distributed banking system.
+    and fund transfers in the distributed banking system.
 
     This API allows users to register with a branch bank, create accounts with chosen
-    currencies, and perform unauthenticated account lookups to verify ownership.
+    currencies, perform unauthenticated account lookups to verify ownership, and initiate
+    same-bank and cross-bank fund transfers.
 
     ## Account Number Semantics
 
@@ -48,6 +49,8 @@ tags:
     description: User registration and profile operations
   - name: Accounts
     description: Account creation and lookup operations
+  - name: Transfers
+    description: Fund transfer operations (same-bank and cross-bank)
 
 paths:
   /users:
@@ -321,6 +324,240 @@ paths:
                     code: "INVALID_ACCOUNT_NUMBER"
                     message: "Account number must be exactly 8 characters"
 
+  /transfers:
+    post:
+      tags:
+        - Transfers
+      summary: Initiate a fund transfer
+      description: |
+        Initiates a fund transfer from a source account to a destination account.
+        Follows locked design decisions D-01 (routing by bank prefix), D-05 (idempotency), XFER-04 (currency conversion),
+        and D-04 (JWT authentication for cross-bank).
+      operationId: initiateTransfer
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TransferRequest'
+            examples:
+              sameBankTransfer:
+                summary: Same-bank transfer
+                value:
+                  transferId: "550e8400-e29b-41d4-a716-446655440000"
+                  sourceAccount: "EST12345"
+                  destinationAccount: "EST54321"
+                  amount: "100.00"
+              crossBankTransfer:
+                summary: Cross-bank transfer
+                value:
+                  transferId: "660e9511-f30c-52e5-b827-557766551111"
+                  sourceAccount: "EST12345"
+                  destinationAccount: "LAT54321"
+                  amount: "100.00"
+      responses:
+        '201':
+          description: Transfer initiated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransferResponse'
+              examples:
+                sameBankCompleted:
+                  summary: Same-bank transfer completed
+                  value:
+                    transferId: "550e8400-e29b-41d4-a716-446655440000"
+                    status: "completed"
+                    sourceAccount: "EST12345"
+                    destinationAccount: "EST54321"
+                    amount: "100.00"
+                    timestamp: "2026-04-08T12:00:05Z"
+                crossBankCompleted:
+                  summary: Cross-bank transfer completed
+                  value:
+                    transferId: "660e9511-f30c-52e5-b827-557766551111"
+                    status: "completed"
+                    sourceAccount: "EST12345"
+                    destinationAccount: "LAT54321"
+                    amount: "100.00"
+                    convertedAmount: "85.00"
+                    exchangeRate: "0.850000"
+                    rateCapturedAt: "2026-04-08T12:00:00Z"
+                    timestamp: "2026-04-08T12:00:10Z"
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Account not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Duplicate transfer
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                duplicateTransfer:
+                  summary: Transfer ID already used
+                  value:
+                    code: "DUPLICATE_TRANSFER"
+                    message: "A transfer with ID '550e8400-e29b-41d4-a716-446655440000' already exists"
+        '422':
+          description: Unprocessable entity
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                insufficientFunds:
+                  summary: Insufficient funds
+                  value:
+                    code: "INSUFFICIENT_FUNDS"
+                    message: "Insufficient funds in source account"
+        '503':
+          description: Service unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /transfers/receive:
+    post:
+      tags:
+        - Transfers
+      summary: Receive cross-bank transfer
+      description: |
+        Receives and processes a cross-bank transfer initiated by another bank.
+        Follows locked design decisions D-02 (inter-bank endpoint), D-04 (JWT authentication),
+        and DEC-05 (HTTP body contains only JWT field).
+      operationId: receiveInterBankTransfer
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InterBankTransferRequest'
+            examples:
+              interBankTransfer:
+                summary: Cross-bank transfer JWT
+                value:
+                  jwt: "eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0cmFuc2ZlcklkIjoiNTUwZTg0MDAtZTI5Yi00MWQ0LWE3MTYtNDQ2NjU1NDQwMDAwIiwic291cmNlQWNjb3VudCI6IkVTVDEyMzQ1IiwiZGVzdGluYXRpb25BY2NvdW50IjoiTEFUNTU0MzIxIiwiYW1vdW50IjoiMTAwLjAwIiwic291cmNlQmFua0lkIjoiRVNUMDEiLCJkZXN0aW5hdGlvbkJhbmtJZCI6IkxBVDAwMiIsInRpbWVzdGFtcCI6IjIwMjYtMDQtMDhUMTI6MDA6MDBaIiwibm9uY2UiOiJhMWIyYzNkNGU1ZjZnN2g4In0.signature"
+      responses:
+        '200':
+          description: Transfer received successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InterBankTransferResponse'
+              examples:
+                transferAccepted:
+                  summary: Transfer accepted
+                  value:
+                    transferId: "550e8400-e29b-41d4-a716-446655440000"
+                    status: "completed"
+                    destinationAccount: "LAT54321"
+                    amount: "100.00"
+                    timestamp: "2026-04-08T12:00:15Z"
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Account not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /transfers/{transferId}:
+    get:
+      tags:
+        - Transfers
+      summary: Get transfer status
+      description: |
+        Retrieves the current status and details of a transfer.
+        Decision DEC-04: Include this endpoint in Phase 2.
+      operationId: getTransferStatus
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: transferId
+          in: path
+          required: true
+          description: The unique identifier of the transfer
+          schema:
+            type: string
+            format: uuid
+            example: "550e8400-e29b-41d4-a716-446655440000"
+      responses:
+        '200':
+          description: Transfer status retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransferStatusResponse'
+              examples:
+                completedTransfer:
+                  summary: Transfer completed
+                  value:
+                    transferId: "550e8400-e29b-41d4-a716-446655440000"
+                    status: "completed"
+                    sourceAccount: "EST12345"
+                    destinationAccount: "LAT54321"
+                    amount: "100.00"
+                    timestamp: "2026-04-08T12:00:15Z"
+                failedTransfer:
+                  summary: Transfer failed
+                  value:
+                    transferId: "880e3944-j64f-85h8-e261-001122334455"
+                    status: "failed"
+                    sourceAccount: "EST11111"
+                    destinationAccount: "LAT22222"
+                    amount: "1000.00"
+                    timestamp: "2026-04-08T12:01:00Z"
+                    errorMessage: "Insufficient funds in source account"
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Transfer not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                transferNotFound:
+                  summary: Transfer not found
+                  value:
+                    code: "TRANSFER_NOT_FOUND"
+                    message: "Transfer with ID '550e8400-e29b-41d4-a716-446655440000' not found"
+
 components:
   schemas:
     UserRegistrationRequest:
@@ -501,6 +738,198 @@ components:
           description: A human-readable error message
           example: "Account with number 'EST12345' not found"
 
+    TransferRequest:
+      type: object
+      required:
+        - transferId
+        - sourceAccount
+        - destinationAccount
+        - amount
+      properties:
+        transferId:
+          type: string
+          format: uuid
+          description: Unique identifier for idempotency (D-05)
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        sourceAccount:
+          type: string
+          description: Source account with bank prefix for routing (D-01)
+          pattern: '^[A-Z0-9]{8}$'
+          example: "EST12345"
+        destinationAccount:
+          type: string
+          description: Destination account with bank prefix for routing (D-01, XFER-03)
+          pattern: '^[A-Z0-9]{8}$'
+          example: "LAT54321"
+        amount:
+          type: string
+          format: decimal
+          description: Amount to transfer (decimal string for precision)
+          pattern: '^\d+\.\d{2}$'
+          example: "100.00"
+
+    TransferResponse:
+      type: object
+      required:
+        - transferId
+        - status
+        - sourceAccount
+        - destinationAccount
+        - amount
+        - timestamp
+      properties:
+        transferId:
+          type: string
+          format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        status:
+          type: string
+          enum: [completed, failed, pending]
+          description: |
+            completed: Transfer succeeded
+            failed: Transfer failed
+            pending: Phase 3 feature
+          example: "completed"
+        sourceAccount:
+          type: string
+          pattern: '^[A-Z0-9]{8}$'
+          example: "EST12345"
+        destinationAccount:
+          type: string
+          pattern: '^[A-Z0-9]{8}$'
+          example: "LAT54321"
+        amount:
+          type: string
+          format: decimal
+          pattern: '^\d+\.\d{2}$'
+          example: "100.00"
+        convertedAmount:
+          type: string
+          format: decimal
+          description: Present only for cross-currency transfers (XFER-04)
+          pattern: '^\d+\.\d{2}$'
+          example: "85.00"
+        exchangeRate:
+          type: string
+          format: decimal
+          description: Rate from central bank (D-03), 6 decimal places
+          pattern: '^\d+\.\d{6}$'
+          example: "0.850000"
+        rateCapturedAt:
+          type: string
+          format: date-time
+          description: When rate was captured from central bank
+          example: "2026-04-08T12:00:00Z"
+        timestamp:
+          type: string
+          format: date-time
+          example: "2026-04-08T12:00:05Z"
+        errorMessage:
+          type: string
+          description: Present only when status = failed
+          example: "Insufficient funds in source account EST12345"
+
+    InterBankTransferRequest:
+      type: object
+      required:
+        - jwt
+      properties:
+        jwt:
+          type: string
+          description: |
+            JWT signed by source bank (D-04, DEC-03 ES256, DEC-05 body format)
+            Contains all transfer details in payload for cryptographic integrity
+          example: "eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0cmFuc2ZlcklkIjoiNTUwZTg0MDAtZTI5Yi00MWQ0LWE3MTYtNDQ2NjU1NDQwMDAwIiwic291cmNlQWNjb3VudCI6IkVTVDEyMzQ1IiwiZGVzdGluYXRpb25BY2NvdW50IjoiTEFUNTU0MzIxIiwiYW1vdW50IjoiMTAwLjAwIiwic291cmNlQmFua0lkIjoiRVNUMDEiLCJkZXN0aW5hdGlvbkJhbmtJZCI6IkxBVDAwMiIsInRpbWVzdGFtcCI6IjIwMjYtMDQtMDhUMTI6MDA6MDBaIiwibm9uY2UiOiJhMWIyYzNkNGU1ZjZnN2g4In0.signature"
+
+    InterBankTransferResponse:
+      type: object
+      required:
+        - transferId
+        - status
+        - destinationAccount
+        - amount
+        - timestamp
+      properties:
+        transferId:
+          type: string
+          format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        status:
+          type: string
+          enum: [completed, failed]
+          example: "completed"
+        destinationAccount:
+          type: string
+          pattern: '^[A-Z0-9]{8}$'
+          example: "LAT54321"
+        amount:
+          type: string
+          format: decimal
+          description: Amount credited (in destination currency)
+          pattern: '^\d+\.\d{2}$'
+          example: "100.00"
+        timestamp:
+          type: string
+          format: date-time
+          example: "2026-04-08T12:00:15Z"
+
+    TransferStatusResponse:
+      type: object
+      required:
+        - transferId
+        - status
+        - sourceAccount
+        - destinationAccount
+        - amount
+        - timestamp
+      properties:
+        transferId:
+          type: string
+          format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        status:
+          type: string
+          enum: [completed, failed, pending]
+          example: "completed"
+        sourceAccount:
+          type: string
+          pattern: '^[A-Z0-9]{8}$'
+          example: "EST12345"
+        destinationAccount:
+          type: string
+          pattern: '^[A-Z0-9]{8}$'
+          example: "LAT54321"
+        amount:
+          type: string
+          format: decimal
+          pattern: '^\d+\.\d{2}$'
+          example: "100.00"
+        convertedAmount:
+          type: string
+          format: decimal
+          description: Present only for cross-currency transfers
+          pattern: '^\d+\.\d{2}$'
+          example: "85.00"
+        exchangeRate:
+          type: string
+          format: decimal
+          description: Present only for cross-currency transfers
+          pattern: '^\d+\.\d{6}$'
+          example: "0.850000"
+        rateCapturedAt:
+          type: string
+          format: date-time
+          description: Present only when exchangeRate is present
+          example: "2026-04-08T12:00:00Z"
+        timestamp:
+          type: string
+          format: date-time
+          example: "2026-04-08T12:00:15Z"
+        errorMessage:
+          type: string
+          description: Present only when status = failed
+          example: "Insufficient funds in source account EST12345"
+
   securitySchemes:
     BearerAuth:
       type: http
@@ -511,10 +940,13 @@ components:
 
         **Required For:**
         - Account creation (POST /users/{userId}/accounts)
+        - Transfer initiation (POST /transfers)
+        - Transfer status lookup (GET /transfers/{transferId})
 
         **Not Required For:**
         - User registration (POST /users) - initial signup is open
         - Account lookup (GET /accounts/{accountNumber}) - unauthenticated for verification
+        - Inter-bank transfer reception (POST /transfers/receive) - authenticated via bank-signed JWT (D-04)
 
         **Token Format:**
         Tokens are signed JWTs containing the userId and expiration time.

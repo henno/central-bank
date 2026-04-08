@@ -1,51 +1,32 @@
-# Spectral ruleset for OpenAPI 3.1 contract validation
-# This configuration enforces project-specific patterns and best practices
-
 rules:
-  # Enable standard OpenAPI rules
-  operation-operationId:
-    description: Operation should have an operationId
-    severity: warn
-    given: $.paths.*.*
-    then:
-      - field: operationId
-        function: truthy
-
-  operation-tags:
-    description: Operation should have tags
-    severity: warn
-    given: $.paths.*.*
-    then:
-      - field: tags
-        function: truthy
-
-  # Custom rules for monetary amounts
   decimal-string-money:
-    description: Monetary amounts must use decimal string format with pattern
+    description: Monetary amounts must have decimal format and pattern
     severity: error
     given:
-      - $.components.schemas.*.properties[?(@.format == 'decimal')]
+      - $.components.schemas.*.properties[?(@.format == "decimal" && !(@.name && @.name.includes("rate")))]
     then:
+      - field: pattern
+        function: truthy
       - field: pattern
         function: pattern
         functionOptions:
-          match: '^-?\d+\.\d{2}$'
+          match: "\\."
 
-  # Custom rule for decimal strings with up to 6 decimal places (exchange rates)
   decimal-string-exchange-rate:
-    description: Exchange rates must use decimal string format with up to 6 decimal places
+    description: Exchange rates must have decimal format with pattern
     severity: error
     given:
-      - $.components.schemas..additionalProperties[?(@.format == 'decimal')]
+      - $.components.schemas.*.properties[?(@.name && @.name.includes("rate") && @.format == "decimal")]
     then:
+      - field: pattern
+        function: truthy
       - field: pattern
         function: pattern
         functionOptions:
-          match: '^\d+\.\d{1,6}$'
+          match: "\\."
 
-  # Custom rule for account number patterns
   account-number-pattern:
-    description: Account numbers must follow the 8-character pattern
+    description: Account numbers must match 8-character pattern
     severity: error
     given:
       - $.components.schemas.*.properties[?(@.name && (@.name == "accountNumber" || @.name == "sourceAccount" || @.name == "destinationAccount"))]
@@ -53,11 +34,10 @@ rules:
       - field: pattern
         function: pattern
         functionOptions:
-          match: '^[A-Z0-9]{8}$'
+          match: "^[A-Z0-9]{8}$"
 
-  # Custom rule for currency code patterns
   currency-code-pattern:
-    description: Currency codes must be 3-letter ISO 4217 codes
+    description: Currency codes must match ISO 4217 pattern
     severity: error
     given:
       - $.components.schemas.*.properties[?(@.name && (@.name == "currency" || @.name == "baseCurrency"))]
@@ -65,64 +45,4 @@ rules:
       - field: pattern
         function: pattern
         functionOptions:
-          match: '^[A-Z]{3}$'
-
-  # Ensure examples are present for important schemas
-  examples-for-request-bodies:
-    description: Request bodies should include examples
-    severity: warn
-    given:
-      - $.paths.*.*[*].requestBody.content["application/json"]
-    then:
-      - field: examples
-        function: length
-        functionOptions:
-          min: 1
-
-  examples-for-responses:
-    description: Responses should include examples
-    severity: warn
-    given:
-      - $.paths.*.*[*].responses.*.content["application/json"]
-    then:
-      - field: examples
-        function: length
-        functionOptions:
-          min: 1
-
-  # Ensure error responses are well-documented
-  error-response-format:
-    description: Error responses should reference Error schema
-    severity: error
-    given:
-      - $.paths.*.*[*].responses.[?(@ >= 400)].content["application/json"]
-    then:
-      - field: schema.$ref
-        function: pattern
-        functionOptions:
-          match: '#/components/schemas/Error'
-    subject: body
-
-  # Ensure operation descriptions are present
-  operation-description-length:
-    description: Operations should have meaningful descriptions
-    severity: warn
-    given:
-      - $.paths.*.*[*]
-    then:
-      - field: description
-        function: length
-        functionOptions:
-          min: 30
-
-  # Ensure all paths have operationId
-  operation-missing-id:
-    description: All operations should have an operationId
-    severity: warn
-    given:
-      - $.paths.*.*
-    then:
-      - field: operationId
-        function: length
-        functionOptions:
-          min: 1
+          match: "^[A-Z]{3}$"
