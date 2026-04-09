@@ -79,8 +79,15 @@ class Application
         }
 
         // Validate address format
-        if (!preg_match('#^https?://.+#', $input['address'])) {
+        $addressHost = parse_url($input['address'], PHP_URL_HOST);
+        if (!preg_match('#^https?://.+#', $input['address']) || !is_string($addressHost) || $addressHost === '') {
             $this->sendError(400, 'Address must be a valid URL', 'INVALID_REQUEST');
+        }
+
+        try {
+            $this->validateBankAddress($input['address']);
+        } catch (\Exception $e) {
+            $this->sendError(400, $e->getMessage(), 'INVALID_REQUEST');
         }
 
         // Validate public key length
@@ -168,9 +175,162 @@ class Application
         ];
     }
 
+    private function validateBankAddress(string $address): void
+    {
+        $parts = parse_url($address);
+        $scheme = is_array($parts) ? strtolower((string)($parts['scheme'] ?? '')) : '';
+        $host = is_array($parts) ? strtolower((string)($parts['host'] ?? '')) : '';
+
+        if (!in_array($scheme, ['http', 'https'], true) || $host === '') {
+            throw new \Exception('Address must be a valid URL');
+        }
+
+        if (!$this->isPublicBankHost($host)) {
+            throw new \Exception('Address must use a publicly reachable host');
+        }
+
+        $healthUrl = $this->buildHealthUrl($parts);
+        $statusCode = $this->fetchHealthStatusCode($healthUrl);
+
+        if ($statusCode === null) {
+            throw new \Exception('Bank health endpoint is not reachable');
+        }
+
+        if ($statusCode < 200 || $statusCode >= 300) {
+            throw new \Exception('Bank health endpoint must return a 2xx response');
+        }
+    }
+
+    private function isPublicBankHost(string $host): bool
+    {
+        $host = strtolower(rtrim($host, '.'));
+        if ($host === 'localhost' || str_ends_with($host, '.localhost')) {
+            return false;
+        }
+
+        $ips = $this->resolveHostIps($host);
+        if ($ips === []) {
+            return false;
+        }
+
+        foreach ($ips as $ip) {
+            if (!$this->isPublicIp($ip)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private function resolveHostIps(string $host): array
+    {
+        $host = trim($host, '[]');
+
+        if (filter_var($host, FILTER_VALIDATE_IP)) {
+            return [$host];
+        }
+
+        $ips = [];
+
+        if (function_exists('dns_get_record')) {
+            foreach ([DNS_A, defined('DNS_AAAA') ? DNS_AAAA : 0] as $type) {
+                if ($type === 0) {
+                    continue;
+                }
+
+                $records = dns_get_record($host, $type) ?: [];
+                foreach ($records as $record) {
+                    $ip = $record['ip'] ?? $record['ipv6'] ?? null;
+                    if (is_string($ip) && $ip !== '') {
+                        $ips[] = $ip;
+                    }
+                }
+            }
+        }
+
+        if ($ips === []) {
+            $ipv4Records = gethostbynamel($host) ?: [];
+            foreach ($ipv4Records as $ip) {
+                if (is_string($ip) && $ip !== '') {
+                    $ips[] = $ip;
+                }
+            }
+        }
+
+        return array_values(array_unique($ips));
+    }
+
+    private function isPublicIp(string $ip): bool
+    {
+        return filter_var(
+            $ip,
+            FILTER_VALIDATE_IP,
+            FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE
+        ) !== false;
+    }
+
+    private function buildHealthUrl(array $parts): string
+    {
+        $scheme = strtolower((string)($parts['scheme'] ?? 'https'));
+        $host = (string)($parts['host'] ?? '');
+        $port = isset($parts['port']) ? ':' . $parts['port'] : '';
+        $path = rtrim((string)($parts['path'] ?? ''), '/');
+
+        if (str_contains($host, ':') && !str_starts_with($host, '[')) {
+            $host = '[' . $host . ']';
+        }
+
+        return $scheme . '://' . $host . $port . $path . '/health';
+    }
+
+    private function fetchHealthStatusCode(string $healthUrl): ?int
+    {
+        $context = stream_context_create([
+            'http' => [
+                'method' => 'GET',
+                'timeout' => 5,
+                'ignore_errors' => true,
+                'header' => "Accept: application/json\r\nUser-Agent: CentralBank/1.0\r\n",
+            ],
+            'ssl' => [
+                'verify_peer' => true,
+                'verify_peer_name' => true,
+            ],
+        ]);
+
+        $headers = [];
+        $previousHandler = set_error_handler(static function (): bool {
+            return true;
+        });
+
+        try {
+            file_get_contents($healthUrl, false, $context);
+            $headers = $http_response_header ?? [];
+        } finally {
+            restore_error_handler();
+        }
+
+        return $this->extractStatusCode($headers);
+    }
+
+    private function extractStatusCode(array $headers): ?int
+    {
+        $statusCode = null;
+
+        foreach ($headers as $header) {
+            if (preg_match('#^HTTP/\S+\s+(\d{3})#', $header, $matches)) {
+                $statusCode = (int)$matches[1];
+            }
+        }
+
+        return $statusCode;
+    }
+
     private function getPath(): string
     {
         $uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
+        // Production serves the API under /central-bank, but routing expects /api/v1 paths.
+        $uri = preg_replace('#^/central-bank#', '', $uri);
         return $uri ?: '/';
     }
 

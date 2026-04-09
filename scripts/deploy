@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+REMOTE_HOST="root@test.diarainfra.com"
+REMOTE_BASE="/var/www/test.diarainfra.com/central-bank"
+
+ssh "$REMOTE_HOST" "mkdir -p '$REMOTE_BASE/src' '$REMOTE_BASE/openapi'"
+
+scp "central-bank/src/Application.php" "$REMOTE_HOST:$REMOTE_BASE/src/Application.php"
+scp "central-bank/src/Database.php" "$REMOTE_HOST:$REMOTE_BASE/src/Database.php"
+scp "openapi/central-bank.yaml" "$REMOTE_HOST:$REMOTE_BASE/openapi/central-bank.yaml"
+scp "openapi/branch-bank.yaml" "$REMOTE_HOST:$REMOTE_BASE/openapi/branch-bank.yaml"
+
+if [ -d "central-bank/docs" ]; then
+  ssh "$REMOTE_HOST" "mkdir -p '$REMOTE_BASE/docs'"
+  scp -r "central-bank/docs/." "$REMOTE_HOST:$REMOTE_BASE/docs/"
+fi
+
+ssh "$REMOTE_HOST" "chown nobody:nobody '$REMOTE_BASE/src/Application.php' '$REMOTE_BASE/src/Database.php' '$REMOTE_BASE/openapi/central-bank.yaml' '$REMOTE_BASE/openapi/branch-bank.yaml' && if [ -d '$REMOTE_BASE/docs' ]; then chown -R nobody:nobody '$REMOTE_BASE/docs'; fi"

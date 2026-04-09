@@ -42,7 +42,10 @@ paths:
       summary: Register a new bank
       description: |
         Registers a new branch bank with the central bank and returns a unique bank ID.
-        The bank provides its public key and reachable address for discovery by other banks.
+        The bank provides its public key and publicly reachable address for discovery by other banks.
+
+        Registration is accepted only when the central bank can reach the bank's agreed
+        `GET /health` endpoint and the host is publicly routable.
       operationId: registerBank
       security: []
       requestBody:
@@ -56,7 +59,7 @@ paths:
                 summary: Standard bank registration
                 value:
                   name: "Estonia Commercial Bank"
-                  address: "https://ecb.banking.example:8443"
+                  address: "https://ecb.banking.example:8443/api/v1"
                   publicKey: "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEEVs/o5+UW6c1x0O5JqZ2LxZ9m7Y3X5Z1C9xK9Y8Z7vL9Z1C9xK9Y8Z7vL9Z1C9xK9Y8Z7vL9Z1C9xK9Y8Z7vL9Z1C9xK9Y8Z7vL9Z1C9xK9Y8Z7vL9Z1C9xK9Y8Z7vL9Z1C9xK9Y8Z7vL9Z1C9xK9Y8Z7vL9Z1C9xK9Y8Z7vL9Z1C9xK9Y8Z7vL9Z1C9xK9Y8Z7vL9Z1C9xK9Y8Z7vL9Z1C9xK9Y8Z7vL9Z1A=="
       responses:
         '201':
@@ -83,6 +86,11 @@ paths:
                   value:
                     code: "INVALID_REQUEST"
                     message: "Bank name is required"
+                unreachableHealthEndpoint:
+                  summary: Health endpoint failed validation
+                  value:
+                    code: "INVALID_REQUEST"
+                    message: "Bank health endpoint must return a 2xx response"
         '409':
           description: Bank already registered
           content:
@@ -120,13 +128,13 @@ paths:
                     banks:
                       - bankId: "EST001"
                         name: "Estonia Commercial Bank"
-                        address: "https://ecb.banking.example:8443"
+                        address: "https://ecb.banking.example:8443/api/v1"
                         publicKey: "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEEVs/o5+UW6c1x0O5JqZ2LxZ9m7Y3X5Z1C9xK9Y8Z7vL9Z1A=="
                         lastHeartbeat: "2026-04-02T11:10:00Z"
                         status: "active"
                       - bankId: "LAT002"
                         name: "Latvia Savings Bank"
-                        address: "https://lsb.banking.example:8443"
+                        address: "https://lsb.banking.example:8443/api/v1"
                         publicKey: "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAzK9Y8Z7vL9Z1A=="
                         lastHeartbeat: "2026-04-02T11:12:00Z"
                         status: "active"
@@ -188,7 +196,7 @@ paths:
                   value:
                     bankId: "EST001"
                     name: "Estonia Commercial Bank"
-                    address: "https://ecb.banking.example:8443"
+                    address: "https://ecb.banking.example:8443/api/v1"
                     publicKey: "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEEVs/o5+UW6c1x0O5JqZ2LxZ9m7Y3X5Z1C9xK9Y8Z7vL9Z1C9xK9Y8Z7vL9Z1A=="
                     lastHeartbeat: "2026-04-02T11:10:00Z"
                     status: "active"
@@ -350,9 +358,13 @@ components:
           address:
             type: string
             format: uri
-            description: The publicly reachable endpoint for this bank
+            description: |
+              The publicly reachable base address for this bank API.
+
+              The host must be publicly routable and must expose `GET /health`.
+              The central bank validates the bank by calling `${address}/health`.
             pattern: '^https?://.+'
-            example: "https://ecb.banking.example:8443"
+            example: "https://ecb.banking.example:8443/api/v1"
           publicKey:
             type: string
             description: The bank's public key for cryptographic verification
@@ -428,7 +440,7 @@ components:
             type: string
             format: uri
             description: The publicly reachable endpoint for this bank
-            example: "https://ecb.banking.example:8443"
+            example: "https://ecb.banking.example:8443/api/v1"
           publicKey:
             type: string
             description: The bank's public key for cryptographic verification
@@ -467,7 +479,7 @@ components:
             type: string
             format: uri
             description: The publicly reachable endpoint for this bank
-            example: "https://ecb.banking.example:8443"
+            example: "https://ecb.banking.example:8443/api/v1"
           publicKey:
             type: string
             description: The bank's public key for cryptographic verification

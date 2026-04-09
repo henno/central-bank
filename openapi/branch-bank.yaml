@@ -45,6 +45,8 @@ servers:
     description: Testing server
 
 tags:
+  - name: Health
+    description: Public service health endpoint used during central bank registration
   - name: Users
     description: User registration and profile operations
   - name: Accounts
@@ -53,6 +55,44 @@ tags:
     description: Fund transfer operations (same-bank and cross-bank)
 
 paths:
+  /health:
+    get:
+      tags:
+        - Health
+      summary: Health check
+      description: |
+        Returns the branch bank health status.
+
+        The central bank uses this endpoint when validating new bank registrations.
+        This endpoint must be publicly reachable without authentication.
+      operationId: getHealth
+      security: []
+      responses:
+        '200':
+          description: Branch bank is healthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+              examples:
+                healthy:
+                  summary: Service healthy
+                  value:
+                    status: "ok"
+                    timestamp: "2026-04-09T12:00:00Z"
+        '503':
+          description: Branch bank is unhealthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                unhealthy:
+                  summary: Service unavailable
+                  value:
+                    code: "SERVICE_UNAVAILABLE"
+                    message: "Branch bank is temporarily unavailable"
+
   /users:
     post:
       tags:
@@ -641,6 +681,23 @@ paths:
 
 components:
   schemas:
+    HealthResponse:
+      type: object
+      required:
+        - status
+        - timestamp
+      properties:
+        status:
+          type: string
+          enum: [ok]
+          description: Service health status
+          example: "ok"
+        timestamp:
+          type: string
+          format: date-time
+          description: Timestamp when the health response was generated
+          example: "2026-04-09T12:00:00Z"
+
     UserRegistrationRequest:
       type: object
       required:
