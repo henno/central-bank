@@ -79,7 +79,8 @@ class Application
         }
 
         // Validate address format
-        if (!preg_match('#^https?://.+#', $input['address'])) {
+        $addressHost = parse_url($input['address'], PHP_URL_HOST);
+        if (!preg_match('#^https?://.+#', $input['address']) || !is_string($addressHost) || $addressHost === '') {
             $this->sendError(400, 'Address must be a valid URL', 'INVALID_REQUEST');
         }
 
