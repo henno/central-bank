@@ -172,6 +172,8 @@ class Application
     private function getPath(): string
     {
         $uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
+        // Production serves the API under /central-bank, but routing expects /api/v1 paths.
+        $uri = preg_replace('#^/central-bank#', '', $uri);
         return $uri ?: '/';
     }
 
