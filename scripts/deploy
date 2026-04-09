@@ -16,4 +16,4 @@ if [ -d "central-bank/docs" ]; then
   scp -r "central-bank/docs/." "$REMOTE_HOST:$REMOTE_BASE/docs/"
 fi
 
-ssh "$REMOTE_HOST" "chown nobody:nobody '$REMOTE_BASE/src/Application.php' '$REMOTE_BASE/src/Database.php' '$REMOTE_BASE/openapi/central-bank.yaml' '$REMOTE_BASE/openapi/branch-bank.yaml' && if [ -d '$REMOTE_BASE/docs' ]; then chown -R nobody:nobody '$REMOTE_BASE/docs'; fi"
+ssh "$REMOTE_HOST" "sh -lc 'chown nobody:nobody \"$REMOTE_BASE/src/Application.php\" \"$REMOTE_BASE/src/Database.php\" \"$REMOTE_BASE/openapi/central-bank.yaml\" \"$REMOTE_BASE/openapi/branch-bank.yaml\" && if [ -d \"$REMOTE_BASE/docs\" ]; then chown -R nobody:nobody \"$REMOTE_BASE/docs\"; fi'"
