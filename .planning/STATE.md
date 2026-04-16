@@ -29,6 +29,8 @@ See: .planning/PROJECT.md (updated 2026-04-02)
 ## Notes
 
 This project is contract-first and currently has no application implementation.
+Swagger/OpenAPI documentation was clarified on 2026-04-16 so `POST /banks` now explicitly
+describes the initial 30-minute heartbeat window and `expiresAt` lifecycle after registration.
 
 ## Decisions
 
@@ -62,8 +64,8 @@ This project is contract-first and currently has no application implementation.
 
 ## Session
 
-**Last session:** 2026-04-08T12:18:33Z - 2026-04-08T12:28:00Z
-**Stopped at:** Completed Phase 3: Resilient Delivery (both plans)
+**Last session:** 2026-04-16T00:00:00Z - 2026-04-16T00:00:00Z
+**Stopped at:** Clarified `POST /banks` Swagger documentation for registration expiry and heartbeat lifecycle
 
 ## Performance Metrics
 

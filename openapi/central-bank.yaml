@@ -44,6 +44,12 @@ paths:
 
         Registration is accepted only when the central bank can reach the bank's agreed
         `GET /health` endpoint and the host is publicly routable.
+
+        A successful registration marks the bank as active immediately and starts its initial
+        30-minute heartbeat window. The `expiresAt` value in the `201` response shows when the
+        registration will expire unless the bank sends `POST /banks/{bankId}/heartbeat` before
+        that moment. After `expiresAt`, the bank may be pruned from the registry and must
+        register again if it was removed for inactivity.
       operationId: registerBank
       security: []
       requestBody:
@@ -61,7 +67,12 @@ paths:
                   publicKey: "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEEVs/o5+UW6c1x0O5JqZ2LxZ9m7Y3X5Z1C9xK9Y8Z7vL9Z1C9xK9Y8Z7vL9Z1C9xK9Y8Z7vL9Z1C9xK9Y8Z7vL9Z1C9xK9Y8Z7vL9Z1C9xK9Y8Z7vL9Z1C9xK9Y8Z7vL9Z1C9xK9Y8Z7vL9Z1C9xK9Y8Z7vL9Z1C9xK9Y8Z7vL9Z1C9xK9Y8Z7vL9Z1C9xK9Y8Z7vL9Z1C9xK9Y8Z7vL9Z1C9xK9Y8Z7vL9Z1A=="
       responses:
         '201':
-          description: Bank registered successfully
+          description: |
+            Bank registered successfully.
+
+            The returned `expiresAt` timestamp is the end of the bank's initial activity window.
+            If no heartbeat is received before that time, the bank becomes eligible for removal
+            from the registry.
           content:
             application/json:
               schema:
